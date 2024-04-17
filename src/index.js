@@ -1,6 +1,6 @@
 import '/src/style.css';
 import ToDoListItem from './toDoLists';
-import {addSection, dialogBoxAddListitem, ModalRefresh } from './createDOMObjects';
+import {dialogBoxAddListitem, ModalRefresh } from './createDOMObjects';
 
 
 const TDL = (function(){
@@ -12,9 +12,10 @@ const TDL = (function(){
     const mainContent = document.querySelector(".checkList");
     //Dialog items
     //btns
-    const addWorkSectionBtn = document.querySelector(".addWorkSection");
+    const createNewProjectBtn = document.querySelector(".addNewProject");
     const addItemToListBtn = document.querySelector(".addTask");
-    const addProject = document.querySelector(".addSection");
+    const addNewProject = document.querySelector(".addSection");
+    const createNewWorkSectionBtn = document.querySelector(".addNewWorkSection")
     //elements
     const addWorkDialog = document.querySelector(".addSectionDialog");
     const ProjListCont = document.querySelector(".projectListContainer");
@@ -42,7 +43,7 @@ const TDL = (function(){
     console.log(secArr);
     
     //Events
-    addWorkSectionBtn.addEventListener("click", ()=>{
+    createNewProjectBtn.addEventListener("click", ()=>{
         newListArr = [];
         ModalRefresh(dropDownselector,secArr,ProjListCont);
         addWorkDialog.showModal();
@@ -52,10 +53,14 @@ const TDL = (function(){
         dialogListAdd();
     });
 
-    addProject.addEventListener("click",()=>{
+    addNewProject.addEventListener("click",()=>{
         TestArr.push(ToDoListItem(projectNameInput.value,dropDownselector.value,newListArr,[false,false,false],"26/03/2025",secArr));
         _render();
     });
+
+    createNewWorkSectionBtn.addEventListener("click",()=>{
+        alert("hi");
+    })
 
     //renders the page
     _render();
@@ -63,15 +68,93 @@ const TDL = (function(){
     function _render(){
         //cleans all items in the sidebar
         TDLcontainer.innerHTML = "";
+        mainContent.innerHTML = "";
         //adding the sidebar to DOM/ mainsection choice
         for (let secChoice=0;secChoice<secArr.length;secChoice++){
             TDLcontainer.appendChild(addSection(secArr[secChoice],TestArr,true,mainContent))
         };
     };
+
+
+    //creates the section for the sidebar
+    function addSection(secChoice,toDoArr,isSideBar,mainContent){
+        let section = document.createElement("div");
+        section.innerHTML = secChoice;
+        //loop to add each project to this element
+        for (let projChoice = 0; projChoice<toDoArr.length;projChoice++){
+            //checks to see if item should be in that section
+            if (toDoArr[projChoice].workSection == secChoice){
+                section.appendChild(addProject(projChoice,isSideBar,toDoArr,mainContent))
+            };
+        };
+        return section;
+    };
+
+    //creates the Project element
+    function addProject(projChoice,isSideBar,toDoArr,mainContent){
+
+        let delBtn = document.createElement("button");
+        delBtn.addEventListener("click",()=>{  
+            isSideBar = false;   
+            Project.remove();
+            toDoArr.splice(projChoice,1);
+            _render();
+        });
+        delBtn.innerHTML = "Delete"
+
+        let Project = document.createElement("div");
+        Project.innerHTML = toDoArr[projChoice].ProjectName;
+        //check to see if it is an element on the side bar so it can attach a click event to it
+        if (isSideBar == true){
+            //event that when something on the sidebar is clicked it will render it on the main section
+            Project.addEventListener("click",function(){       
+                mainContent.innerHTML = "";
+                //calls itself with the isSideBar set to false
+                mainContent.appendChild(addProject(projChoice,false,toDoArr,mainContent));
+            });
+        };
+        //loop to add the list Items to the element
+        for (let listItem=0; listItem<toDoArr[projChoice].toDoItems.length;listItem++){
+            Project.appendChild(addList(toDoArr,projChoice,listItem,isSideBar));
+        };
+        Project.append(delBtn);
+
+
+    
+
+        return Project
+    };
+            
+    //function responsible for creating the list elements
+    function addList(toDoArr,projChoice,listItem,isSideBar){
+        let list = document.createElement("div");
+        list.innerHTML = toDoArr[projChoice].toDoItems[listItem];
+        //checks if its np sidebar so it can add other necessary components
+        if (isSideBar==false){
+            let check = document.createElement("input");
+            check.setAttribute("type","checkbox");
+            // console.log(toDoArr[projChoice].toDoItems[listItem]);
+            // console.log(toDoArr[projChoice].toDoItems);
+            if (toDoArr[projChoice].compleated[listItem] == true){
+                check.checked = true;
+            };
+            //adds event to save when a task has been compleated or not
+            check.onchange = function(){
+                toDoArr[projChoice].compleated[listItem] = check.checked;
+            }
+            list.appendChild(check);
+        };
+    
+        return list;
+    };
+
+
+
     function dialogListAdd(){
         newListArr.push(TaskInput.value)
         console.log(newListArr);
         dialogBoxAddListitem(TaskInput.value,ProjListCont)
+        TaskInput.value = "";
     };
 
     function GTA(){
